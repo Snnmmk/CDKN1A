@@ -122,11 +122,9 @@ cellchat <- createCellChat(object =GetAssayData(sce, assay = "RNA", layer = "dat
 cellchat <- addMeta(cellchat, meta = sce@meta.data)
 cellchat <- setIdent(cellchat, ident.use = "SubLabel")
 
-# 使用CellChat数据库
 CellChatDB.use <- CellChatDB.human
 cellchat@DB <- CellChatDB.use
 
-# 分析高TFAP4表达组
 cellchat <- subsetData(cellchat)
 cellchat <- identifyOverExpressedGenes(cellchat)
 cellchat <- identifyOverExpressedInteractions(cellchat)
@@ -143,7 +141,6 @@ selected_pathways <- c("SPP1", "CDH1", "FN1","COLLAGEN")
 
 netAnalysis_signalingRole_network(cellchat, signaling = selected_pathways, width = 14, height = 6, font.size = 15)
 
-# 绘制网络图# 绘制网络图，并显示通讯权重数字
 netVisual_aggregate(
   object = cellchat,
   signaling = selected_pathways,
