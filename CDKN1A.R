@@ -17,20 +17,20 @@ library(TCellSI)
 ####Extra Step 01#####
 
 meta_data <- sce@meta.data
-meta_data$TFAP4_expression <- FetchData(sce.all.int, vars = "CDKN1A")[,1]
-threshold <- median(meta_data$TFAP4_expression, na.rm = TRUE)
-meta_data$TFAP4_expression_level <- ifelse(meta_data$TFAP4_expression > threshold, "High", "Low")
-sce$TFAP4_expression_level<-meta_data$TFAP4_expression_level
+meta_data$CDKN1A_expression <- FetchData(sce.all.int, vars = "CDKN1A")[,1]
+threshold <- median(meta_data$CDKN1A_expression, na.rm = TRUE)
+meta_data$CDKN1A_expression_level <- ifelse(meta_data$CDKN1A_expression > threshold, "High", "Low")
+sce$CDKN1A_expression_level<-meta_data$CDKN1A_expression_level
 
 ####Extra Step 02#####
 malignant_indices <- which(sce$Malignant == "Malignant Epithelial")
 sce$SubLabel[malignant_indices] <- ifelse(
-  sce$TFAP4_expression_level[malignant_indices] == "Low",
+  sce$CDKN1A_expression_level[malignant_indices] == "Low",
   "Malignant Epithelial LOW",
   "Malignant Epithelial HIGH"
 )
 
-####Figure 5A 5D 5G ####
+####Figure 4A 4B  ####
 DimPlot(sce, label = F, group.by = "CellType")  &
   theme_pubr(base_size = 8) &
   #NoLegend() &
@@ -42,9 +42,9 @@ DimPlot(sce, label = F, group.by = "CellType")  &
         legend.justification = c(0,0.5)) &
   scale_color_manual(values = custom_colors)#you can change the color as you wish
 
-###Figure 5B 5E 5H ####
+###Figure 4C 4D  ####
 custom_colors <- c('darkred','lightblue')
-DimPlot(sce, label = F, group.by = "TFAP4_expression_level")  &
+DimPlot(sce, label = F, group.by = "CDKN1A_expression_level")  &
   theme_pubr(base_size = 8) &
   #NoLegend() &
   theme(plot.title = element_blank(), 
@@ -55,9 +55,9 @@ DimPlot(sce, label = F, group.by = "TFAP4_expression_level")  &
         legend.justification = c(0,0.5)) &
   scale_color_manual(values = custom_colors)
 
-###Figure 5E & 5F####
+###Figure 4E & 5F####
 sce@meta.data %>%
-  ggplot(aes(x = TFAP4_expression_level, fill = CellType)) +
+  ggplot(aes(x = CDKN1A_expression_level, fill = CellType)) +
   theme_pubr(base_size = 8) +
   theme(
     plot.title = element_blank(),
@@ -93,7 +93,7 @@ summarized_progeny_scores_df <- summarized_progeny_scores %>%
   spread(Pathway, avg) %>%
   data.frame(row.names = 1, check.names = FALSE, stringsAsFactors = FALSE) 
 
-####Figure 5J ####
+####Figure 5G 5H ####
 progeny_hmap = pheatmap(t(summarized_progeny_scores_df),
                         fontsize=12, 
                         fontsize_row = 10, color=myColor,
@@ -112,15 +112,15 @@ cds <- cluster_cells(cds,cluster_method = "louvain")
 cds <- learn_graph(cds)
 cds <- order_cells(cds, root_cells = root_cells)
 
-###Figure 6A 6C 6E####
+###Figure 5A 5C ####
 plot_cells(cds, color_cells_by = "SubLabel",label_roots = FALSE, label_cell_groups=FALSE, label_leaves=FALSE,
            label_branch_points=FALSE, graph_label_size=1.5)
 
-#####Figure 6B 6D 6F####
+#####Figure 5B 5D####
 plot_cells(cds, color_cells_by = "partition",label_groups_by_cluster=FALSE, label_leaves=FALSE,label_branch_points=FALSE)
 
 #####Figure 6G ####
-plot_cells(cds, genes=c("TFAP4","MYC","RAF1","KRAS","JAK1","JAK2","STAT1","STAT2","STAT3"),
+plot_cells(cds, genes=c("CDKN1A","MYC","EPCAM","KRAS","PMS2","MSH2","MSH6","MLH1"),
            show_trajectory_graph=FALSE,
            label_cell_groups=FALSE,
            label_leaves=FALSE)
@@ -128,8 +128,8 @@ plot_cells(cds, genes=c("TFAP4","MYC","RAF1","KRAS","JAK1","JAK2","STAT1","STAT2
 
 
 ####Supplementary Figure6A####
-plot_genes_in_pseudotime(cds[c("CDKN1A","MYC","EPCAM","KRAS","JAK1","JAK2","STAT1","STAT2","STAT3"),],
-                         color_cells_by="Malignant_Epithelial_TFAP4",
+plot_genes_in_pseudotime(cds[c("CDKN1A","MYC","EPCAM","KRAS","PMS2","MSH2","MSH6","MLH1"),],
+                         color_cells_by="Malignant_Epithelial_CDKN1A",
                          min_expr=0.5)
 
 ####Extra Step 03#####
@@ -152,8 +152,8 @@ cellchat <- aggregateNet(cellchat)
 cellchat <- netAnalysis_computeCentrality(cellchat)
 
 
-#####Figure 7A & 7B####
-selected_pathways <- c("TGFB", "NOTCH")
+#####Figure 7####
+selected_pathways <- c("SPP1", "FN1","COLLAGEN")
 
 netAnalysis_signalingRole_network(cellchat, signaling = selected_pathways, width = 14, height = 6, font.size = 15)
 
@@ -163,85 +163,3 @@ netVisual_aggregate(
   top = 1,
   layout = "circle"
 )
-
-####Extra Step 04#####
-
-expression_data <- as.matrix(GetAssayData(T_sub, layer = "data")) 
-annotation_data <- data.frame(
-  UniqueCell_ID = colnames(T_sub),
-  annotation = T_sub$TFAP4_expression_level  
-)
-pseudo_bulk <- create_pseudo_bulk(
-  annotation_data = annotation_data,
-  expression_data = expression_data,
-  cluster_col = "annotation",  
-  cell_id_col = "UniqueCell_ID",
-  n_clusters = 2,              
-  factor = 5,                 
-  sampling_rate = 0.6           
-)
-Result <- TCellSI::TCSS_Calculate(pseudo_bulk)
-high_scores <- Result[, grepl("^High_", colnames(Result))]
-low_scores <- Result[, grepl("^Low_", colnames(Result))]
-mean_scores <- data.frame(
-  State = rownames(Result),
-  High = rowMeans(high_scores),
-  Low = rowMeans(low_scores)
-)
-
-#####Figure 9B 9C 9D #####
-
-df_long <- pivot_longer(mean_scores, cols = c(High, Low), names_to = "Group", values_to = "Score")
-
-ggplot(df_long, aes(x = Group, y = State, size = Score, color = Score)) +
-  geom_point(alpha = 0.8) +
-  scale_size(range = c(3, 10)) + 
-  scale_color_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0.1) +
-  theme_minimal() +
-  theme(panel.grid=element_blank())
-  labs(
-    title = "T Cell State Scores by TFAP4 Expression",
-    x = "T Cell State",
-    y = "Group",
-    size = "Score",
-    color = "Score"
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-####Extra Step 05#####
-#All data could be downloaded in NCBI GEO GSE130157 GSE169246 GSE179994 
-
-meta_data<-sce@meta.data
-
-meta_data$TFAP4_expression <- FetchData(sce, vars = "TFAP4")[,1]
-summary(meta_data_filtered$TFAP4_expression)
-meta_data_filtered <- subset(meta_data, TFAP4_expression > 0)
-
-#### Figure 9E #####
-ggplot(meta_data_filtered, aes(x = Treatment, y = TFAP4_expression, fill = Treatment)) +
-  geom_boxplot(width = 0.6, outlier.shape = NA, color = "black") +
-  geom_signif(
-    comparisons = list(c("PD-1 treated", "Untreated")),
-    map_signif_level = TRUE,   
-    test = "wilcox.test",
-    textsize = 5,
-    y_position = max(meta_data_filtered$TFAP4_expression) * 1.05  
-  ) +
-  scale_fill_manual(values = c("PD-1 treated" = "red", "Untreated" = "#4DBBD5")) +
-  labs(
-    y = "Normalized Expression"
-  ) +
-  theme_classic(base_size = 14) +
-  theme(
-    legend.position = "none",
-    axis.title.x = element_blank(),
-    axis.text.x = element_text(size = 12, face = "bold"),
-    axis.text.y = element_text(size = 12),
-    plot.caption = element_text(hjust = 0, size = 10, color = "gray40")
-  )
-
-
-
-
-
-
