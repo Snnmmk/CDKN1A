@@ -119,13 +119,29 @@ plot_cells(cds, color_cells_by = "SubLabel",label_roots = FALSE, label_cell_grou
 #####Figure 5B 5D####
 plot_cells(cds, color_cells_by = "partition",label_groups_by_cluster=FALSE, label_leaves=FALSE,label_branch_points=FALSE)
 
-#####Figure 6G ####
+#####Figure 5E 5F ####
 plot_cells(cds, genes=c("CDKN1A","MYC","EPCAM","KRAS","PMS2","MSH2","MSH6","MLH1"),
            show_trajectory_graph=FALSE,
            label_cell_groups=FALSE,
            label_leaves=FALSE)
 
+#####Figure 6G 6H####
+binned_df <- plot_df %>%
+  mutate(bin = ntile(pseudotime, 50)) %>%
+  group_by(bin) %>%
+  summarise(
+    mean_time = mean(pseudotime),
+    mean_expr = mean(expression)
+  )
 
+ggplot(binned_df, aes(x = mean_time, y = mean_expr)) +
+  geom_line(color = "red", size = 1.2) +
+  geom_point(color = "red", size = 1.8) +
+  labs(
+    x = "Pseudotime",
+    y = "Expression"
+  ) +
+  theme_classic(base_size = 14)
 
 ####Supplementary Figure6A####
 plot_genes_in_pseudotime(cds[c("CDKN1A","MYC","EPCAM","KRAS","PMS2","MSH2","MSH6","MLH1"),],
